@@ -2,6 +2,9 @@ const tokenService = require('../services/token-service');
 
 module.exports = async function (req, res, next) {
     try {
+        if(!req.cookies) {
+            res.status(404).json({ message: 'No cookies recieved'})
+        }
         const { accessToken } = req.cookies;
         console.log(req.cookies);
         if (!accessToken) {
