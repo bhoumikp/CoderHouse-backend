@@ -10,13 +10,18 @@ class AuthController {
         if (!username) {
             return res.status(400).json({ message: 'Username field is required!' });
         }
-
+        if (!usernameType) {
+            return res.status(400).json({ message: 'Username Type field is required!' });
+        }
+        
         const otp = await otpService.generateOtp();
 
         const ttl = 1000 * 60 * 10; // 10 min
         const expires = Date.now() + ttl;
         const data = `${username}.${otp}.${expires}`;
         const hash = hashService.hashOtp(data);
+
+        console.log(otp);
 
         // send sms OTP
         if(usernameType === 'phone') {
@@ -98,7 +103,7 @@ class AuthController {
                 refreshTokenFromCookie
             );
         } catch (err) {
-            return res.status(401).json({ message: 'Invalid Token' });
+            return res.status(401).json({ message: 'Invalid Token', error: err });
         }
         // Check if token is in db
         try {
@@ -110,7 +115,7 @@ class AuthController {
                 return res.status(401).json({ message: 'Invalid token' });
             }
         } catch (err) {
-            return res.status(500).json({ message: 'Internal error' });
+            return res.status(500).json({ message: 'Internal error', error: err });
         }
         // check if valid user
         const user = await userService.findUser({ _id: userData._id });
@@ -126,7 +131,7 @@ class AuthController {
         try {
             await tokenService.updateRefreshToken(userData._id, refreshToken);
         } catch (err) {
-            return res.status(500).json({ message: 'Internal error' });
+            return res.status(500).json({ message: 'Internal error', error: err });
         }
         // put in cookie
         res.cookie('refreshToken', refreshToken, {
